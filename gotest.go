@@ -21,7 +21,7 @@ type Page struct {
 }
 
 func init() {
-	for _, tmpl := range []string{"edit", "view"} {
+	for _, tmpl := range []string{"edit", "view", "top"} {
 		t := template.Must(template.ParseFiles("tmpl/" + tmpl + ".html"))
 		templates[tmpl] = t
 	}
@@ -52,6 +52,11 @@ func loadPage(title string) (*Page, error) {
 
 // view contets
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
+	body := r.FormValue("viewbody")
+	if body != "" {
+		http.Redirect(w, r, "/view/"+body, http.StatusFound)
+	}
+
 	p, err := loadPage(title)
 	if err != nil {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
@@ -62,6 +67,11 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 
 // edit content
 func editHandler(w http.ResponseWriter, r *http.Request, title string) {
+	body := r.FormValue("editbody")
+	if body != "" {
+		http.Redirect(w, r, "/edit/"+body, http.StatusFound)
+	}
+
 	p, err := loadPage(title)
 	if err != nil {
 		p = &Page{Title: title}
@@ -79,6 +89,11 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 		return
 	}
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
+}
+
+// top render
+func topRenderHandler(w http.ResponseWriter, r *http.Request) {
+	renderTemplate(w, "top", nil)
 }
 
 // html render
@@ -103,5 +118,6 @@ func main() {
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
+	http.HandleFunc("/", topRenderHandler)
 	http.ListenAndServe(":8080", nil)
 }
